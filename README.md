@@ -38,17 +38,26 @@ Help Options:
 
 Supported absolute timestamps
 
-- 2006-01-02 15:04:05 +07:00
-- 2006-01-02 15:04:05 MST
-- 2006-01-02 15:04:05
-- 02 Jan 06 15:04 MST (RFC822)
-- 02 Jan 06 15:04 -0700 (RFC822Z)
-- Monday, 02-Jan-06 15:04:05 MST (RFC850)
-- Mon, 02 Jan 2006 15:04:05 MST (RFC1123)
-- Mon, 02 Jan 2006 15:04:05 -0700 (RFC1123Z)
-- 2006-01-02T15:04:05Z07:00 (RFC3339)
-- 2006-01-02T15:04:05.999999999Z07:00 (RFC3339Nano)
-- 2006-01-02
+- `2006-01-02 15:04:05 +07:00`
+- `2006-01-02 15:04:05 MST`
+- `2006-01-02 15:04:05`
+- `02 Jan 06 15:04 MST` (RFC822)
+- `02 Jan 06 15:04 -0700` (RFC822Z)
+- `Monday, 02-Jan-06 15:04:05 MST` (RFC850)
+- `Mon, 02 Jan 2006 15:04:05 MST` (RFC1123)
+- `Mon, 02 Jan 2006 15:04:05 -0700` (RFC1123Z)
+- `2006-01-02T15:04:05Z07:00` (RFC3339)
+- `2006-01-02T15:04:05.999999999Z07:00` (RFC3339Nano)
+- `2006-01-02`
+
+Supported relative timestamps ([`time.Duration`](https://pkg.go.dev/time) and [`fortio.org/duration`](https://github.com/fortio/duration))
+
+- `1m` (minute)
+- `1h` (hour)
+- `1d` (day)
+- `1d6h` (1 day, 6 hours)
+- `1w` (1 week)
+- `1w2d6h` (1 week, 2 days, 6 hours)
 
 ## Metrics
 

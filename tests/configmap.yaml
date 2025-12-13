@@ -11,3 +11,38 @@ metadata:
   name: foo2
   labels:
     ttl: 2026-01-01
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foo-rel-1m
+  labels:
+    ttl: 1m
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foo-rel-1d
+  labels:
+    ttl: "1d"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foo-rel-5d
+  labels:
+    ttl: "5d"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foo-rel-1d6h
+  labels:
+    ttl: "1d6h"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foo-invalid
+  labels:
+    ttl: "1237123123"

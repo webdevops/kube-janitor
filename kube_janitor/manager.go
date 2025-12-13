@@ -155,12 +155,17 @@ func (j *Janitor) Run() error {
 		gvkLogger.Debug("checking resources")
 
 		err := j.kubeEachResource(ctx, resourceType.AsGVR(), func(resource unstructured.Unstructured) error {
-			resourceLogger := gvkLogger.With("namespace", resource.GetNamespace(), "resource", resource.GetName())
 
-			if expiryDate := resource.GetLabels()[j.config.Label]; expiryDate != "" {
-				parsedDate, expired, err := j.checkExpiryDate(expiryDate)
+			if ttl := resource.GetLabels()[j.config.Label]; ttl != "" {
+				resourceLogger := gvkLogger.With(
+					slog.String("namespace", resource.GetNamespace()),
+					slog.String("resource", resource.GetName()),
+					slog.String("ttl", ttl),
+				)
+
+				parsedDate, expired, err := j.checkExpiryDate(resource.GetCreationTimestamp().Time, ttl)
 				if err != nil {
-					resourceLogger.Error("unable to parse expiration date", slog.String("raw", expiryDate), slog.Any("error", err))
+					resourceLogger.Error("unable to parse expiration date", slog.String("raw", ttl), slog.Any("error", err))
 					return nil
 				}
 

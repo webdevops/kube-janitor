@@ -2,8 +2,11 @@ package kube_janitor
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
+
+	"fortio.org/duration"
 )
 
 var (
@@ -29,20 +32,36 @@ var (
 	}
 )
 
-func (j *Janitor) checkExpiryDate(value string) (parsedTime *time.Time, expired bool, err error) {
+func (j *Janitor) checkExpiryDate(createdAt time.Time, expiry string) (parsedTime *time.Time, expired bool, err error) {
 	expired = false
 
 	// sanity checks
-	value = strings.TrimSpace(value)
-	if value == "" {
+	expiry = strings.TrimSpace(expiry)
+	if expiry == "" || expiry == "0" {
 		return
 	}
 
+	// parse as unix timestamp
+	if unixTimestamp, err := strconv.ParseInt(expiry, 10, 64); err == nil {
+		expiryTime := time.Unix(unixTimestamp, 0)
+		parsedTime = &expiryTime
+	}
+
+	// parse duration
+	if !createdAt.IsZero() {
+		if expiryDuration, err := duration.Parse(expiry); err == nil && expiryDuration.Seconds() > 1 {
+			expiryTime := createdAt.Add(expiryDuration)
+			parsedTime = &expiryTime
+		}
+	}
+
 	// parse time
-	for _, timeFormat := range janitorTimeFormats {
-		if parseVal, parseErr := time.Parse(timeFormat, value); parseErr == nil && parseVal.Unix() > 0 {
-			parsedTime = &parseVal
-			break
+	if parsedTime == nil {
+		for _, timeFormat := range janitorTimeFormats {
+			if parseVal, parseErr := time.Parse(timeFormat, expiry); parseErr == nil && parseVal.Unix() > 0 {
+				parsedTime = &parseVal
+				break
+			}
 		}
 	}
 
@@ -51,7 +70,7 @@ func (j *Janitor) checkExpiryDate(value string) (parsedTime *time.Time, expired 
 		// check if parsed time is before NOW -> expired
 		expired = parsedTime.Before(time.Now())
 	} else {
-		err = fmt.Errorf("unable to parse time '%s'", value)
+		err = fmt.Errorf("unable to parse time '%s'", expiry)
 	}
 
 	return
