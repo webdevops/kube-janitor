@@ -1,0 +1,16 @@
+name: "schedule/docker"
+
+on:
+  schedule:
+    - cron: '45 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  schedule:
+    uses: ./.github/workflows/build-docker.yaml
+    secrets: inherit
+    with:
+      publish: true

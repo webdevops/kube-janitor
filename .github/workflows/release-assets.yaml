@@ -1,0 +1,46 @@
+name: "release/assets"
+
+on:
+  release:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ github.ref_name }}
+
+jobs:
+  build:
+    name: "${{ matrix.task }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - task: release-assets-linux
+          - task: release-assets-darwin
+          - task: release-assets-windows
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup runner
+        uses: ./.github/actions/setup-runner
+
+      - name: Setup go
+        uses: ./.github/actions/setup-go
+
+      - name: Build
+        run: |
+          make "${{ matrix.task }}"
+
+      - name: Upload assets to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./release-assets/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+          promote: false
