@@ -175,6 +175,7 @@ func (j *Janitor) Run() error {
 						"kind":      resource.GetKind(),
 						"namespace": resource.GetNamespace(),
 						"name":      resource.GetName(),
+						"ttl":       ttl,
 					},
 					*parsedDate,
 				)

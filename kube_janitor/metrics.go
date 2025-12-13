@@ -21,6 +21,7 @@ func (j *Janitor) setupMetrics() {
 			"kind",
 			"namespace",
 			"name",
+			"ttl",
 		},
 	)
 	prometheus.MustRegister(j.prometheus.ttl)
