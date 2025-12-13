@@ -61,6 +61,6 @@ Supported relative timestamps ([`time.Duration`](https://pkg.go.dev/time) and [`
 
 ## Metrics
 
-| Metric                            | Description                                                        |
-|-----------------------------------|--------------------------------------------------------------------|
-| `kube_janitor_resource_ttl`       | Expiry date (unix timestamp) for every resource which was detected |
+| Metric                                           | Description                                                        |
+|--------------------------------------------------|--------------------------------------------------------------------|
+| `kube_janitor_resource_expiry_timestamp_seconds` | Expiry date (unix timestamp) for every resource which was detected |

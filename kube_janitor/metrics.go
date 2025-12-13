@@ -13,8 +13,8 @@ type (
 func (j *Janitor) setupMetrics() {
 	j.prometheus.ttl = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "kube_janitor_resource_ttl",
-			Help: "TTL date for a resource",
+			Name: "kube_janitor_resource_expiry_timestamp_seconds",
+			Help: "Expiry unix timestamp for Kubernetes resources",
 		},
 		[]string{
 			"version",
