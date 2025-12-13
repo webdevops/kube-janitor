@@ -33,6 +33,23 @@ Application Options:
 Help Options:
   -h, --help                                       Show this help message
 ```
+
+## TTL tag
+
+Supported absolute timestamps
+
+- 2006-01-02 15:04:05 +07:00
+- 2006-01-02 15:04:05 MST
+- 2006-01-02 15:04:05
+- 02 Jan 06 15:04 MST (RFC822)
+- 02 Jan 06 15:04 -0700 (RFC822Z)
+- Monday, 02-Jan-06 15:04:05 MST (RFC850)
+- Mon, 02 Jan 2006 15:04:05 MST (RFC1123)
+- Mon, 02 Jan 2006 15:04:05 -0700 (RFC1123Z)
+- 2006-01-02T15:04:05Z07:00 (RFC3339)
+- 2006-01-02T15:04:05.999999999Z07:00 (RFC3339Nano)
+- 2006-01-02
+
 ## Metrics
 
 | Metric                            | Description                                                        |
