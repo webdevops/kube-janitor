@@ -33,7 +33,7 @@ jobs:
       matrix:
         include:
           - Dockerfile: Dockerfile
-            target: "final"
+            target: "final-static"
             suffix: ""
             latest: "auto"
 
