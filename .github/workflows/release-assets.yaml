@@ -19,9 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - task: release-assets-linux
-          - task: release-assets-darwin
-          - task: release-assets-windows
+          - task: release-assets
     steps:
       - uses: actions/checkout@v6
 
