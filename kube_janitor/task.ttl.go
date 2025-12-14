@@ -40,7 +40,7 @@ func (j *Janitor) runTtlResources(ctx context.Context) error {
 			return j.checkResourceTtlAndTriggerDeleteIfExpired(
 				ctx,
 				gvkLogger,
-				resourceType.AsGVR(),
+				resourceType,
 				resource,
 				ttlValue,
 				metricResourceTtl,

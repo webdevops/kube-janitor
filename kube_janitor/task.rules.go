@@ -34,7 +34,7 @@ func (j *Janitor) runRules(ctx context.Context) error {
 					return j.checkResourceTtlAndTriggerDeleteIfExpired(
 						ctx,
 						gvkLogger,
-						resourceType.AsGVR(),
+						resourceType,
 						resource,
 						rule.Ttl,
 						metricResourceRule,

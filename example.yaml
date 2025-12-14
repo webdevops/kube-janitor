@@ -19,10 +19,18 @@ rules:
       - group: ""
         version: v1
         kind: configmaps
+        # JMESpath for additional selector, should return true if resource should be used for TTL checks, optional
+        jmespath: |-
+          !(metadata.annotations."kubernetes.io/description")
+
+        # kubernetes selector (matchLabels, matchExpressions), optional
         selector:
           matchLabels:
             foo: bar
+
+    # kubernetes selector (matchLabels, matchExpressions), optional
     namespaceSelector:
       matchLabels:
         kubernetes.io/metadata.name: default
-    ttl: 1d
+
+    ttl: 1m

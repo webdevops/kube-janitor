@@ -5,7 +5,7 @@
 [![Quay.io](https://img.shields.io/badge/Quay.io-webdevops%2Fkube--janitor-blue)](https://quay.io/repository/webdevops/kube-janitor)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kube-janitor)](https://artifacthub.io/packages/search?repo=kube-janitor)
 
-Kubernetes janitor which deletes resources by TTL annotation or label written in Golang
+Kubernetes janitor which deletes resources by TTL annotations/labels and static rules written in Golang
 
 ## Configuration
 
@@ -61,6 +61,7 @@ Supported relative timestamps ([`time.Duration`](https://pkg.go.dev/time) and [`
 
 ## Metrics
 
-| Metric                                           | Description                                                        |
-|--------------------------------------------------|--------------------------------------------------------------------|
-| `kube_janitor_resource_expiry_timestamp_seconds` | Expiry date (unix timestamp) for every resource which was detected |
+| Metric                                                | Description                                                                                         |
+|-------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `kube_janitor_resource_ttl_expiry_timestamp_seconds`  | Expiry date (unix timestamp) for every resource which was detected matching the TTL expiry          |
+| `kube_janitor_resource_rule_expiry_timestamp_seconds` | Expiry date (unix timestamp) for every resource which was detected matching the static expiry rules |

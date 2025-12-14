@@ -2,8 +2,10 @@ package kube_janitor
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
+	jmespath "github.com/jmespath-community/go-jmespath"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -15,21 +17,23 @@ type (
 	}
 
 	ConfigTtl struct {
-		Annotation string             `json:"annotation"`
-		Label      string             `json:"label"`
-		Resources  []*ConfigResources `json:"resources"`
+		Annotation string            `json:"annotation"`
+		Label      string            `json:"label"`
+		Resources  []*ConfigResource `json:"resources"`
 	}
 
-	ConfigResources struct {
-		Group    string                `json:"group"`
-		Version  string                `json:"version"`
-		Kind     string                `json:"kind"`
-		Selector *metav1.LabelSelector `json:"selector"`
+	ConfigResource struct {
+		Group            string                `json:"group"`
+		Version          string                `json:"version"`
+		Kind             string                `json:"kind"`
+		Selector         *metav1.LabelSelector `json:"selector"`
+		JmesPath         string                `json:"jmespath"`
+		jmesPathcompiled jmespath.JMESPath
 	}
 
 	ConfigRule struct {
 		Id                string                `json:"id"`
-		Resources         []*ConfigResources    `json:"resources"`
+		Resources         []*ConfigResource     `json:"resources"`
 		NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector"`
 		Ttl               string                `json:"ttl"`
 	}
@@ -38,7 +42,7 @@ type (
 func NewConfig() *Config {
 	return &Config{
 		Ttl: &ConfigTtl{
-			Resources: []*ConfigResources{},
+			Resources: []*ConfigResource{},
 		},
 		Rules: []*ConfigRule{},
 	}
@@ -80,11 +84,24 @@ func (c *ConfigRule) Validate() error {
 	return nil
 }
 
-func (c *ConfigResources) String() string {
+func (c *ConfigResource) CompiledJmesPath() jmespath.JMESPath {
+	if c.jmesPathcompiled == nil {
+		compiledPath, err := jmespath.Compile(c.JmesPath)
+		if err != nil {
+			panic(fmt.Errorf(`failed to compile jmespath "%s": %w`, c.JmesPath, err))
+		}
+
+		c.jmesPathcompiled = compiledPath
+	}
+
+	return c.jmesPathcompiled
+}
+
+func (c *ConfigResource) String() string {
 	return c.AsGVR().String()
 }
 
-func (c *ConfigResources) AsGVR() schema.GroupVersionResource {
+func (c *ConfigResource) AsGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    c.Group,
 		Version:  c.Version,
