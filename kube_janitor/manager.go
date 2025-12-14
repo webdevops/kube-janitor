@@ -11,6 +11,7 @@ import (
 	yaml "github.com/goccy/go-yaml"
 	"github.com/webdevops/go-common/log/slogger"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	kubelog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,7 +23,8 @@ type (
 
 		config *Config
 
-		dynClient *dynamic.DynamicClient
+		kubeClient *kubernetes.Clientset
+		dynClient  *dynamic.DynamicClient
 
 		logger *slogger.Logger
 
@@ -62,6 +64,11 @@ func (j *Janitor) connect() {
 		if err != nil {
 			panic(err.Error())
 		}
+	}
+
+	j.kubeClient, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
 	}
 
 	j.dynClient, err = dynamic.NewForConfig(config)
@@ -140,9 +147,22 @@ func (j *Janitor) Start(interval time.Duration) {
 
 func (j *Janitor) Run() error {
 	j.connect()
+	ctx := context.Background()
 
-	if err := j.runTtlResources(); err != nil {
-		return err
+	if j.config.Ttl.Label != "" || j.config.Ttl.Annotation != "" {
+		if err := j.runTtlResources(ctx); err != nil {
+			return err
+		}
+	} else {
+		j.logger.Debug("skipping TTL run, no label or annotation defined")
+	}
+
+	if len(j.config.Rules) > 0 {
+		if err := j.runRules(ctx); err != nil {
+			return err
+		}
+	} else {
+		j.logger.Debug("skipping rules run, no rules defined")
 	}
 
 	return nil
