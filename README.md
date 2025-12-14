@@ -5,7 +5,7 @@
 [![Quay.io](https://img.shields.io/badge/Quay.io-webdevops%2Fkube--janitor-blue)](https://quay.io/repository/webdevops/kube-janitor)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/kube-janitor)](https://artifacthub.io/packages/search?repo=kube-janitor)
 
-Kubernetes janitor which deletes resources by TTL label written in Golang
+Kubernetes janitor which deletes resources by TTL annotation or label written in Golang
 
 ## Configuration
 

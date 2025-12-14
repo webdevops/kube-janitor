@@ -12,10 +12,10 @@ const (
 	KubeListLimit = 100
 )
 
-func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionResource, callback func(unstructured unstructured.Unstructured) error) error {
+func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionResource, labelSelector string, callback func(unstructured unstructured.Unstructured) error) error {
 	listOpts := metav1.ListOptions{
 		Limit:         KubeListLimit,
-		LabelSelector: j.config.Label,
+		LabelSelector: labelSelector,
 	}
 	for {
 		result, err := j.dynClient.Resource(gvr).List(ctx, listOpts)

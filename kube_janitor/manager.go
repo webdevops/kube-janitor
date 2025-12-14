@@ -9,12 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	yaml "github.com/goccy/go-yaml"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/webdevops/go-common/log/slogger"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	prometheusCommon "github.com/webdevops/go-common/prometheus"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -146,63 +141,9 @@ func (j *Janitor) Start(interval time.Duration) {
 func (j *Janitor) Run() error {
 	j.connect()
 
-	ctx := context.Background()
-
-	metricResourceTtl := prometheusCommon.NewMetricsList()
-
-	for _, resourceType := range j.config.Resources {
-		gvkLogger := j.logger.With(slog.Any("gvk", resourceType))
-		gvkLogger.Debug("checking resources")
-
-		err := j.kubeEachResource(ctx, resourceType.AsGVR(), func(resource unstructured.Unstructured) error {
-
-			if ttl := resource.GetLabels()[j.config.Label]; ttl != "" {
-				resourceLogger := gvkLogger.With(
-					slog.String("namespace", resource.GetNamespace()),
-					slog.String("resource", resource.GetName()),
-					slog.String("ttl", ttl),
-				)
-
-				parsedDate, expired, err := j.checkExpiryDate(resource.GetCreationTimestamp().Time, ttl)
-				if err != nil {
-					resourceLogger.Error("unable to parse expiration date", slog.String("raw", ttl), slog.Any("error", err))
-					return nil
-				}
-
-				metricResourceTtl.AddTime(
-					prometheus.Labels{
-						"version":   resource.GetAPIVersion(),
-						"kind":      resource.GetKind(),
-						"namespace": resource.GetNamespace(),
-						"name":      resource.GetName(),
-						"ttl":       ttl,
-					},
-					*parsedDate,
-				)
-
-				resourceLogger.Debug("found resource with valid TTL", slog.Time("expirationDate", *parsedDate))
-
-				if expired {
-					if j.dryRun {
-						resourceLogger.Info("resource is expired, would delete resource (DRY-RUN)", slog.Time("expirationDate", *parsedDate))
-					} else {
-						resourceLogger.Info("resource is expired, deleting", slog.Time("expirationDate", *parsedDate))
-						err := j.dynClient.Resource(resourceType.AsGVR()).Namespace(resource.GetNamespace()).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
-						if err != nil {
-							return err
-						}
-					}
-				}
-			}
-
-			return nil
-		})
-		if err != nil {
-			return err
-		}
+	if err := j.runTtlResources(); err != nil {
+		return err
 	}
-
-	metricResourceTtl.GaugeSet(j.prometheus.ttl)
 
 	return nil
 }

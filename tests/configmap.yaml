@@ -1,48 +1,100 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo1
+  name: ttl-bylabel-expired
   labels:
-    ttl: 2024-01-01
+    janitor/ttl: 2024-01-01
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo2
+  name: ttl-bylabel-valid
   labels:
-    ttl: 2026-01-01
+    janitor/ttl: 2030-01-01
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo-rel-1m
+  name: ttl-bylabel-rel-1m
   labels:
-    ttl: 1m
+    janitor/ttl: 1m
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo-rel-1d
+  name: ttl-bylabel-rel-1d
   labels:
-    ttl: "1d"
+    janitor/ttl: "1d"
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo-rel-5d
+  name: ttl-bylabel-rel-5d
   labels:
-    ttl: "5d"
+    janitor/ttl: "5d"
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo-rel-1d6h
+  name: ttl-bylabel-rel-1d6h
   labels:
-    ttl: "1d6h"
+    janitor/ttl: "1d6h"
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: foo-invalid
+  name: ttl-bylabel-invalid
   labels:
-    ttl: "1237123123"
+    janitor/ttl: "1237123123"
+
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-expired
+  annotations:
+    janitor/ttl: 2024-01-01
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-valid
+  annotations:
+    janitor/ttl: 2030-01-01
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-rel-1m
+  annotations:
+    janitor/ttl: 1m
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-rel-1d
+  annotations:
+    janitor/ttl: "1d"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-rel-5d
+  annotations:
+    janitor/ttl: "5d"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-rel-1d6h
+  annotations:
+    janitor/ttl: "1d6h"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ttl-byannotation-invalid
+  annotations:
+    janitor/ttl: "1237123123"
