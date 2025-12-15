@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -116,4 +117,39 @@ func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionR
 	}
 
 	return nil
+}
+
+func (j *Janitor) kubeCreateEventFromResource(ctx context.Context, namespace string, resource unstructured.Unstructured, message, reason string) error {
+	timestamp := metav1.Time{Time: time.Now()}
+
+	event := corev1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "kube-janitor-",
+			Namespace:    resource.GetNamespace(),
+		},
+		ReportingInstance: "kube-janitor",
+		InvolvedObject: corev1.ObjectReference{
+			APIVersion: resource.GetAPIVersion(),
+			Kind:       resource.GetKind(),
+			Namespace:  resource.GetNamespace(),
+			Name:       resource.GetName(),
+			UID:        resource.GetUID(),
+		},
+		Reason:  reason,
+		Message: message,
+		Source: corev1.EventSource{
+			Component: "kube-janitor",
+		},
+		FirstTimestamp:      timestamp,
+		LastTimestamp:       timestamp,
+		Count:               1,
+		Type:                "Normal",
+		Series:              nil,
+		Action:              "Deleted",
+		Related:             nil,
+		ReportingController: "kube-janitor",
+	}
+
+	_, err := j.kubeClient.CoreV1().Events(namespace).Create(ctx, &event, metav1.CreateOptions{})
+	return err
 }

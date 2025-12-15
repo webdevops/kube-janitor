@@ -3,6 +3,7 @@ package kube_janitor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	jmespath "github.com/jmespath-community/go-jmespath"
@@ -90,6 +91,13 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 			err := j.dynClient.Resource(resourceConfig.AsGVR()).Namespace(resource.GetNamespace()).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
 			if err != nil {
 				return err
+			}
+
+			reason := "TimeToLiveExpired"
+			message := fmt.Sprintf(`TTL of "%v" is expired and resource is being deleted`, ttlValue)
+			err = j.kubeCreateEventFromResource(ctx, resource.GetNamespace(), resource, message, reason)
+			if err != nil {
+				resourceLogger.Error("unable to create Kubernetes Event", slog.Any("error", err))
 			}
 		}
 	}
