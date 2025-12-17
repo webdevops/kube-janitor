@@ -2,7 +2,6 @@ package kube_janitor
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -111,7 +110,6 @@ func (j *Janitor) GetConfigFromFile(path string) *Janitor {
 	logger.Info("parsing configuration")
 	err = yaml.UnmarshalWithOptions(data, j.config, yaml.Strict(), yaml.UseJSONUnmarshaler())
 	if err != nil {
-		fmt.Println(err)
 		logger.Fatal("failed to parse config file")
 	}
 
