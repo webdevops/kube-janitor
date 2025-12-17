@@ -9,7 +9,7 @@ ttl:
   resources:
     # definition of resources by group, version, kind (GVR)
     # a wildcard ("*") will try to match as many possible resources
-    # from the serverside GVK list, be careful with it!
+    # from the serverside GVK list, BE CAREFUL with wildcards!
     - {group: "", version: "v1", kind: "pods"}
     - {group: "", version: v1, kind: secrets}
     - {group: apps, version: "*", kind: "*"}
@@ -36,7 +36,7 @@ rules:
     ## run on all namespaces
     namespaceSelector: {}
 
-    ## ttl for rule (based on terminated.finishedAt)
+    ## ttl for rule (based on terminated.finishedAt, see timestampPath)
     ttl: 1h
 
   - id: example
