@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	KubeListLimit = 100
+	KubeDefaultListLimit = 100
 
 	KubeNoNamespace = ""
 
@@ -46,7 +46,7 @@ func (j *Janitor) kubeEachNamespace(ctx context.Context, selector *metav1.LabelS
 	}
 
 	listOpts := metav1.ListOptions{
-		Limit:         KubeListLimit,
+		Limit:         j.kubePageLimit,
 		LabelSelector: labelSelector,
 	}
 	for {
@@ -80,7 +80,7 @@ func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionR
 	}
 
 	listOpts := metav1.ListOptions{
-		Limit:         KubeListLimit,
+		Limit:         j.kubePageLimit,
 		LabelSelector: labelSelector,
 	}
 	for {

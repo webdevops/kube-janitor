@@ -2,11 +2,9 @@ package kube_janitor
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
-	jmespath "github.com/jmespath-community/go-jmespath"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/webdevops/go-common/log/slogger"
 	prometheusCommon "github.com/webdevops/go-common/prometheus"
@@ -14,50 +12,20 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func (j *Janitor) checkResourceIsSkippedByJmesPath(resource unstructured.Unstructured, jmesPath jmespath.JMESPath) (bool, error) {
+const (
+	RuleIdInternalTTL = "kube-janitor-ttl"
+)
 
-	resourceRaw, err := resource.MarshalJSON()
-	if err != nil {
-		return true, err
-	}
-	var data any
-	err = json.Unmarshal(resourceRaw, &data)
-	if err != nil {
-		return true, err
-	}
-
-	// check if resource is valid by JMES path
-	result, err := jmesPath.Search(data)
-	if err != nil {
-		return true, err
-	}
-
-	switch v := result.(type) {
-	case string:
-		// skip if string is empty
-		if len(v) == 0 {
-			return true, nil
-		}
-	case bool:
-		// skip if false (not selected)
-		return !v, nil
-	case nil:
-		// nil? jmes path didn't find anything? better skip the resource
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, ttlValue string, metricResourceTtl *prometheusCommon.MetricList, labels prometheus.Labels) error {
+func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, ruleId string, ttlValue string, metricResourceTtl *prometheusCommon.MetricList, labels prometheus.Labels) error {
 	resourceLogger := logger.With(
 		slog.String("namespace", resource.GetNamespace()),
 		slog.String("resource", resource.GetName()),
 		slog.String("ttl", ttlValue),
 	)
 
-	if resourceConfig.JmesPath != "" {
-		skipped, err := j.checkResourceIsSkippedByJmesPath(resource, resourceConfig.CompiledJmesPath())
+	// check if resource is filtered
+	if !resourceConfig.FilterPath.IsEmpty() {
+		skipped, err := j.checkResourceIsSkippedFromJmesPath(resource, resourceConfig.FilterPath)
 		if err != nil {
 			return err
 		}
@@ -68,7 +36,23 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 		}
 	}
 
-	parsedDate, expired, err := j.checkExpiryDate(resource.GetCreationTimestamp().Time, ttlValue)
+	// use creation timesstamp by default
+	// use timestamp from jmespath as alterantive (if configured)
+	timestamp := resource.GetCreationTimestamp().Time
+	if !resourceConfig.TimestampPath.IsEmpty() {
+		val, err := j.parseResourceTimestampFromJmesPath(resource, resourceConfig.TimestampPath)
+		if err != nil {
+			resourceLogger.Warn("parse resource timestamp from jmesPath failed", slog.Any("error", err))
+			return nil
+		} else if val == nil {
+			resourceLogger.Debug("parse resource timestamp from jmesPath failed")
+			return nil
+		}
+
+		timestamp = *val
+	}
+
+	parsedDate, expired, err := j.checkExpiryDate(timestamp, ttlValue)
 	if err != nil {
 		resourceLogger.Error("unable to parse expiration date", slog.String("raw", ttlValue), slog.Any("error", err))
 		return nil
@@ -94,7 +78,8 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 			}
 
 			reason := "TimeToLiveExpired"
-			message := fmt.Sprintf(`TTL of "%v" is expired and resource is being deleted`, ttlValue)
+			message := fmt.Sprintf(`TTL of "%v" is expired and resource is being deleted (%s)`, ttlValue, ruleId)
+
 			err = j.kubeCreateEventFromResource(ctx, resource.GetNamespace(), resource, message, reason)
 			if err != nil {
 				resourceLogger.Error("unable to create Kubernetes Event", slog.Any("error", err))

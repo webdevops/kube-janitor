@@ -14,13 +14,36 @@ ttl:
 
 # static rules (fixed TTLs without using ttl definition in labels/annotations)
 rules:
-  - id: default
+  # cleanup of compelted/failed pods which are not yet removed by the apiserver
+  - id: CleanupCompletedPods
+    resources:
+      - group: ""
+        version: v1
+        kind: pods
+
+        ## get timestampo from containerStatuses if pod is terminated
+        timestampPath: |-
+          max(containerStatuses[*].state.terminated.finishedAt)
+
+        ## filter only pods which are in phase "Failed" or "Succeeded"
+        filterPath: |-
+          phase == 'Failed' || phase == 'Succeeded'
+
+        selector: {}
+
+    ## run on all namespaces
+    namespaceSelector: {}
+
+    ## ttl for rule (based on terminated.finishedAt)
+    ttl: 1h
+
+  - id: example
     resources:
       - group: ""
         version: v1
         kind: configmaps
         # JMESpath for additional selector, should return true if resource should be used for TTL checks, optional
-        jmespath: |-
+        filterPath: |-
           !(metadata.annotations."kubernetes.io/description")
 
         # kubernetes selector (matchLabels, matchExpressions), optional

@@ -2,10 +2,8 @@ package kube_janitor
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
-	jmespath "github.com/jmespath-community/go-jmespath"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -23,12 +21,12 @@ type (
 	}
 
 	ConfigResource struct {
-		Group            string                `json:"group"`
-		Version          string                `json:"version"`
-		Kind             string                `json:"kind"`
-		Selector         *metav1.LabelSelector `json:"selector"`
-		JmesPath         string                `json:"jmespath"`
-		jmesPathcompiled jmespath.JMESPath
+		Group         string                `json:"group"`
+		Version       string                `json:"version"`
+		Kind          string                `json:"kind"`
+		Selector      *metav1.LabelSelector `json:"selector"`
+		TimestampPath *JmesPath             `json:"timestampPath"`
+		FilterPath    *JmesPath             `json:"filterPath"`
 	}
 
 	ConfigRule struct {
@@ -82,19 +80,6 @@ func (c *ConfigRule) Validate() error {
 	}
 
 	return nil
-}
-
-func (c *ConfigResource) CompiledJmesPath() jmespath.JMESPath {
-	if c.jmesPathcompiled == nil {
-		compiledPath, err := jmespath.Compile(c.JmesPath)
-		if err != nil {
-			panic(fmt.Errorf(`failed to compile jmespath "%s": %w`, c.JmesPath, err))
-		}
-
-		c.jmesPathcompiled = compiledPath
-	}
-
-	return c.jmesPathcompiled
 }
 
 func (c *ConfigResource) String() string {

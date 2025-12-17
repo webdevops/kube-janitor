@@ -40,10 +40,11 @@ func main() {
 	initSystem()
 
 	janitor := kube_janitor.New()
-	janitor.SetKubeconfig(Opts.Kubernetes.Config)
-	janitor.SetLogger(logger)
-	janitor.GetConfigFromFile(Opts.Janitor.Config)
-	janitor.SetDryRun(Opts.Janitor.DryRun)
+	janitor.SetKubeconfig(Opts.Kubernetes.Config).
+		SetLogger(logger).
+		SetKubePageSize(Opts.Kubernetes.ItemsPerPage).
+		GetConfigFromFile(Opts.Janitor.Config).
+		SetDryRun(Opts.Janitor.DryRun)
 
 	if Opts.Janitor.Once {
 		err := janitor.Run()

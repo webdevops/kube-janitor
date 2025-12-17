@@ -16,12 +16,11 @@ func (j *Janitor) runRules(ctx context.Context) error {
 	for _, rule := range j.config.Rules {
 		ruleLogger := j.logger.With(
 			slog.Any("rule", rule),
-			slog.String("ttl", rule.Ttl),
 		)
 		ruleLogger.Info("running rule")
 
 		err := j.kubeEachNamespace(ctx, rule.NamespaceSelector, func(namespace corev1.Namespace) error {
-			namespaceLogger := ruleLogger.With(slog.String("namespace", namespace.GetName()))
+			namespaceLogger := ruleLogger
 
 			for _, resourceType := range rule.Resources {
 				gvkLogger := namespaceLogger.With(slog.Any("gvk", resourceType))
@@ -36,6 +35,7 @@ func (j *Janitor) runRules(ctx context.Context) error {
 						gvkLogger,
 						resourceType,
 						resource,
+						rule.Id,
 						rule.Ttl,
 						metricResourceRule,
 						prometheus.Labels{

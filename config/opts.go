@@ -25,7 +25,8 @@ type (
 
 		// kubernetes settings
 		Kubernetes struct {
-			Config string `long:"kubeconfig"            env:"KUBECONFIG"               description:"Kuberentes config path (should be empty if in-cluster)"`
+			Config       string `long:"kubeconfig"            env:"KUBECONFIG"               description:"Kuberentes config path (should be empty if in-cluster)"`
+			ItemsPerPage int64  `long:"kube.itemsperpage"     env:"KUBE_ITEMSPERPAGE"        description:"Defines how many items per page janitor should process" default:"100"`
 		}
 
 		// general options

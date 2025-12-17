@@ -7,6 +7,9 @@
 
 Kubernetes janitor which deletes resources by TTL annotations/labels and static rules written in Golang
 
+By default the janitor uses the creation timestamp from every resource but can also use a custom timestamp by using a JMES path with `timestampPath`.
+
+
 ## Configuration
 
 see [`example.yaml`](example.yaml) for example configurations
@@ -26,6 +29,7 @@ Application Options:
       --dry-run                                    Dry run (no delete) [$JANITOR_DRYRUN]
       --once                                       Run once and exit [$JANITOR_ONCE]
       --kubeconfig=                                Kuberentes config path (should be empty if in-cluster) [$KUBECONFIG]
+      --kube.itemsperpage=                         Defines how many items per page janitor should process (default: 100) [$KUBE_ITEMSPERPAGE]
       --server.bind=                               Server address (default: :8080) [$SERVER_BIND]
       --server.timeout.read=                       Server read timeout (default: 5s) [$SERVER_TIMEOUT_READ]
       --server.timeout.write=                      Server write timeout (default: 10s) [$SERVER_TIMEOUT_WRITE]

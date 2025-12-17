@@ -31,6 +31,8 @@ type (
 		dryRun bool
 
 		prometheus JanitorMetrics
+
+		kubePageLimit int64
 	}
 )
 
@@ -42,6 +44,7 @@ func New() *Janitor {
 
 func (j *Janitor) init() {
 	j.setupMetrics()
+	j.kubePageLimit = KubeDefaultListLimit
 }
 
 func (j *Janitor) connect() {
@@ -85,11 +88,12 @@ func (j *Janitor) connect() {
 	kubelog.SetLogger(kubeLogger)
 }
 
-func (j *Janitor) SetKubeconfig(kubeconfig string) {
+func (j *Janitor) SetKubeconfig(kubeconfig string) *Janitor {
 	j.kubeconfig = kubeconfig
+	return j
 }
 
-func (j *Janitor) GetConfigFromFile(path string) {
+func (j *Janitor) GetConfigFromFile(path string) *Janitor {
 	if j.config == nil {
 		j.config = NewConfig()
 	}
@@ -115,17 +119,25 @@ func (j *Janitor) GetConfigFromFile(path string) {
 	if err != nil {
 		logger.Fatal("config validation failed", slog.Any("error", err))
 	}
+	return j
 }
 
-func (j *Janitor) SetLogger(logger *slogger.Logger) {
+func (j *Janitor) SetLogger(logger *slogger.Logger) *Janitor {
 	j.logger = logger
+	return j
 }
 
-func (j *Janitor) SetDryRun(val bool) {
+func (j *Janitor) SetDryRun(val bool) *Janitor {
 	j.dryRun = val
+	return j
 }
 
-func (j *Janitor) Start(interval time.Duration) {
+func (j *Janitor) SetKubePageSize(val int64) *Janitor {
+	j.kubePageLimit = val
+	return j
+}
+
+func (j *Janitor) Start(interval time.Duration) *Janitor {
 	go func() {
 		// wait for settle down
 		time.Sleep(10 * time.Second)
@@ -143,6 +155,8 @@ func (j *Janitor) Start(interval time.Duration) {
 			time.Sleep(interval)
 		}
 	}()
+
+	return j
 }
 
 func (j *Janitor) Run() error {

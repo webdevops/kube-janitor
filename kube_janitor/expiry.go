@@ -32,6 +32,27 @@ var (
 	}
 )
 
+func (j *Janitor) parseTimestamp(val string) *time.Time {
+	val = strings.TrimSpace(val)
+	if val == "" || val == "0" {
+		return nil
+	}
+
+	// parse as unix timestamp
+	if unixTimestamp, err := strconv.ParseInt(val, 10, 64); err == nil && unixTimestamp > 0 {
+		timestamp := time.Unix(unixTimestamp, 0)
+		return &timestamp
+	}
+
+	for _, timeFormat := range janitorTimeFormats {
+		if timestamp, parseErr := time.Parse(timeFormat, val); parseErr == nil && timestamp.Unix() > 0 {
+			return &timestamp
+		}
+	}
+
+	return nil
+}
+
 func (j *Janitor) checkExpiryDate(createdAt time.Time, expiry string) (parsedTime *time.Time, expired bool, err error) {
 	expired = false
 
@@ -41,13 +62,13 @@ func (j *Janitor) checkExpiryDate(createdAt time.Time, expiry string) (parsedTim
 		return
 	}
 
-	// parse as unix timestamp
-	if unixTimestamp, err := strconv.ParseInt(expiry, 10, 64); err == nil {
+	// first: parse as unix timestamp
+	if unixTimestamp, err := strconv.ParseInt(expiry, 10, 64); err == nil && unixTimestamp > 0 {
 		expiryTime := time.Unix(unixTimestamp, 0)
 		parsedTime = &expiryTime
 	}
 
-	// parse duration
+	// second: parse duration
 	if !createdAt.IsZero() {
 		if expiryDuration, err := duration.Parse(expiry); err == nil && expiryDuration.Seconds() > 1 {
 			expiryTime := createdAt.Add(expiryDuration)
@@ -55,7 +76,7 @@ func (j *Janitor) checkExpiryDate(createdAt time.Time, expiry string) (parsedTim
 		}
 	}
 
-	// parse time
+	// third: parse time
 	if parsedTime == nil {
 		for _, timeFormat := range janitorTimeFormats {
 			if parseVal, parseErr := time.Parse(timeFormat, expiry); parseErr == nil && parseVal.Unix() > 0 {

@@ -42,6 +42,7 @@ func (j *Janitor) runTtlResources(ctx context.Context) error {
 				gvkLogger,
 				resourceType,
 				resource,
+				RuleIdInternalTTL,
 				ttlValue,
 				metricResourceTtl,
 				prometheus.Labels{},
