@@ -13,9 +13,14 @@ import (
 func (j *Janitor) runTtlResources(ctx context.Context) error {
 	metricResourceTtl := prometheusCommon.NewMetricsList()
 
-	for _, resourceType := range j.config.Ttl.Resources {
+	resourceList, err := j.kubeLookupGvrs(j.config.Ttl.Resources)
+	if err != nil {
+		return err
+	}
+
+	for _, resourceType := range resourceList {
 		gvkLogger := j.logger.With(slog.Any("gvk", resourceType))
-		gvkLogger.Debug("checking resources")
+		gvkLogger.Info("checking resources")
 
 		err := j.kubeEachResource(ctx, resourceType.AsGVR(), KubeNoNamespace, resourceType.Selector, func(resource unstructured.Unstructured) error {
 			var ttlValue string

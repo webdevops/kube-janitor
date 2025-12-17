@@ -8,13 +8,15 @@ ttl:
 
   resources:
     # definition of resources by group, version, kind (GVR)
-    - {group: "", version: v1, kind: configmaps}
+    # a wildcard ("*") will try to match as many possible resources
+    # from the serverside GVK list, be careful with it!
+    - {group: "", version: "v1", kind: "pods"}
     - {group: "", version: v1, kind: secrets}
-    - {group: apps, version: v1, kind: deployments}
+    - {group: apps, version: "*", kind: "*"}
 
 # static rules (fixed TTLs without using ttl definition in labels/annotations)
 rules:
-  # cleanup of compelted/failed pods which are not yet removed by the apiserver
+  # cleanup of completed/failed pods which are not yet removed by the Kubernetes control plane
   - id: CleanupCompletedPods
     resources:
       - group: ""
@@ -56,4 +58,4 @@ rules:
       matchLabels:
         kubernetes.io/metadata.name: default
 
-    ttl: 1m
+    ttl: 1h # resources expires 1 hour after creation

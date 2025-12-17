@@ -19,10 +19,17 @@ func (j *Janitor) runRules(ctx context.Context) error {
 		)
 		ruleLogger.Info("running rule")
 
-		err := j.kubeEachNamespace(ctx, rule.NamespaceSelector, func(namespace corev1.Namespace) error {
+		resourceList, err := j.kubeLookupGvrs(rule.Resources)
+		if err != nil {
+			return err
+		}
+		
+		// TODO: check if namespace selector is empty and if, use the cluster list instead
+
+		err = j.kubeEachNamespace(ctx, rule.NamespaceSelector, func(namespace corev1.Namespace) error {
 			namespaceLogger := ruleLogger
 
-			for _, resourceType := range rule.Resources {
+			for _, resourceType := range resourceList {
 				gvkLogger := namespaceLogger.With(slog.Any("gvk", resourceType))
 				err := j.kubeEachResource(ctx, resourceType.AsGVR(), namespace.GetName(), resourceType.Selector, func(resource unstructured.Unstructured) error {
 					resourceLogger := gvkLogger.With(

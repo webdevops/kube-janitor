@@ -1,6 +1,8 @@
 package kube_janitor
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"strings"
 
@@ -15,10 +17,12 @@ type (
 	}
 
 	ConfigTtl struct {
-		Annotation string            `json:"annotation"`
-		Label      string            `json:"label"`
-		Resources  []*ConfigResource `json:"resources"`
+		Annotation string             `json:"annotation"`
+		Label      string             `json:"label"`
+		Resources  ConfigResourceList `json:"resources"`
 	}
+
+	ConfigResourceList []*ConfigResource
 
 	ConfigResource struct {
 		Group         string                `json:"group"`
@@ -31,7 +35,7 @@ type (
 
 	ConfigRule struct {
 		Id                string                `json:"id"`
-		Resources         []*ConfigResource     `json:"resources"`
+		Resources         ConfigResourceList    `json:"resources"`
 		NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector"`
 		Ttl               string                `json:"ttl"`
 	}
@@ -80,6 +84,20 @@ func (c *ConfigRule) Validate() error {
 	}
 
 	return nil
+}
+
+func (c *ConfigResource) Clone() *ConfigResource {
+	ret := ConfigResource{}
+	buf := bytes.Buffer{}
+	err := gob.NewEncoder(&buf).Encode(c)
+	if err != nil {
+		panic(err)
+	}
+	err = gob.NewDecoder(&buf).Decode(&ret)
+	if err != nil {
+		panic(err)
+	}
+	return &ret
 }
 
 func (c *ConfigResource) String() string {

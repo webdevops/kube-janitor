@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	yaml "github.com/goccy/go-yaml"
+	"github.com/patrickmn/go-cache"
 	"github.com/webdevops/go-common/log/slogger"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -21,6 +22,8 @@ type (
 		kubeconfig string
 
 		config *Config
+
+		cache *cache.Cache
 
 		kubeClient *kubernetes.Clientset
 		dynClient  *dynamic.DynamicClient
@@ -43,6 +46,7 @@ func New() *Janitor {
 
 func (j *Janitor) init() {
 	j.setupMetrics()
+	j.cache = cache.New(1*time.Hour, 5*time.Minute)
 	j.kubePageLimit = KubeDefaultListLimit
 }
 
@@ -97,6 +101,8 @@ func (j *Janitor) GetConfigFromFile(path string) *Janitor {
 		j.config = NewConfig()
 	}
 
+	parserCtx := context.Background()
+
 	logger := j.logger.With(slog.String("path", path))
 
 	logger.Info("reading configuration from file")
@@ -108,7 +114,7 @@ func (j *Janitor) GetConfigFromFile(path string) *Janitor {
 	}
 
 	logger.Info("parsing configuration")
-	err = yaml.UnmarshalWithOptions(data, j.config, yaml.Strict(), yaml.UseJSONUnmarshaler())
+	err = yaml.UnmarshalContext(parserCtx, data, j.config, yaml.Strict(), yaml.UseJSONUnmarshaler())
 	if err != nil {
 		logger.Fatal("failed to parse config file")
 	}
@@ -135,6 +141,11 @@ func (j *Janitor) SetKubePageSize(val int64) *Janitor {
 	return j
 }
 
+func (j *Janitor) Connect() *Janitor {
+	j.connect()
+	return j
+}
+
 func (j *Janitor) Start(interval time.Duration) *Janitor {
 	go func() {
 		// wait for settle down
@@ -158,7 +169,6 @@ func (j *Janitor) Start(interval time.Duration) *Janitor {
 }
 
 func (j *Janitor) Run() error {
-	j.connect()
 	ctx := context.Background()
 
 	if j.config.Ttl.Label != "" || j.config.Ttl.Annotation != "" {

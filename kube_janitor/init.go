@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	yaml.RegisterCustomUnmarshalerContext(UmarshallJmesPath)
+	yaml.RegisterCustomUnmarshalerContext(UnmarshallJmesPath)
 }

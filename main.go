@@ -42,6 +42,7 @@ func main() {
 	janitor := kube_janitor.New()
 	janitor.SetKubeconfig(Opts.Kubernetes.Config).
 		SetLogger(logger).
+		Connect().
 		SetKubePageSize(Opts.Kubernetes.ItemsPerPage).
 		GetConfigFromFile(Opts.Janitor.Config).
 		SetDryRun(Opts.Janitor.DryRun)

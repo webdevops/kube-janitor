@@ -23,7 +23,7 @@ func (path *JmesPath) IsEmpty() bool {
 	return path == nil || path.compiledPath == nil
 }
 
-func UmarshallJmesPath(ctx context.Context, path *JmesPath, data []byte) error {
+func UnmarshallJmesPath(ctx context.Context, path *JmesPath, data []byte) error {
 	var valString string
 
 	err := yaml.UnmarshalContext(ctx, data, &valString, yaml.Strict())
@@ -116,7 +116,6 @@ func (j *Janitor) checkResourceIsSkippedFromJmesPath(resource unstructured.Unstr
 
 func (j *Janitor) parseResourceTimestampFromJmesPath(resource unstructured.Unstructured, jmesPath *JmesPath) (*time.Time, error) {
 	result, err := j.fetchResourceValueByFromJmesPath(resource, jmesPath)
-	fmt.Println(jmesPath.Path, result, err)
 	if err != nil {
 		return nil, err
 	}
