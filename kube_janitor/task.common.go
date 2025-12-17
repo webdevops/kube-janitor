@@ -17,9 +17,9 @@ const (
 )
 
 func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, ruleId string, ttlValue string, metricResourceTtl *prometheusCommon.MetricList, labels prometheus.Labels) error {
-	resourceLogger := logger.With(
+	resourceLogger := logger.WithGroup("resource").With(
 		slog.String("namespace", resource.GetNamespace()),
-		slog.String("resource", resource.GetName()),
+		slog.String("name", resource.GetName()),
 		slog.String("ttl", ttlValue),
 	)
 
@@ -65,7 +65,7 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 	labels["ttl"] = ttlValue
 	metricResourceTtl.AddTime(labels, *parsedDate)
 
-	resourceLogger.Debug("found resource with valid TTL", slog.Time("expirationDate", *parsedDate))
+	resourceLogger.Debug("found resource with valid TTL", slog.Time("expiry", *parsedDate))
 
 	if expired {
 		if j.dryRun {

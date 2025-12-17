@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,19 +26,24 @@ type (
 	ConfigResourceList []*ConfigResource
 
 	ConfigResource struct {
-		Group         string                `json:"group"`
-		Version       string                `json:"version"`
-		Kind          string                `json:"kind"`
-		Selector      *metav1.LabelSelector `json:"selector"`
-		TimestampPath *JmesPath             `json:"timestampPath"`
-		FilterPath    *JmesPath             `json:"filterPath"`
+		Group         string              `json:"group"`
+		Version       string              `json:"version"`
+		Kind          string              `json:"kind"`
+		Selector      ConfigLabelSelector `json:"selector"`
+		TimestampPath *JmesPath           `json:"timestampPath"`
+		FilterPath    *JmesPath           `json:"filterPath"`
 	}
 
 	ConfigRule struct {
-		Id                string                `json:"id"`
-		Resources         ConfigResourceList    `json:"resources"`
-		NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector"`
-		Ttl               string                `json:"ttl"`
+		Id                string              `json:"id"`
+		Resources         ConfigResourceList  `json:"resources"`
+		NamespaceSelector ConfigLabelSelector `json:"namespaceSelector"`
+		Ttl               string              `json:"ttl"`
+	}
+
+	ConfigLabelSelector struct {
+		metav1.LabelSelector `json:",inline"`
+		selector             *string
 	}
 )
 
@@ -101,7 +107,7 @@ func (c *ConfigResource) Clone() *ConfigResource {
 }
 
 func (c *ConfigResource) String() string {
-	return c.AsGVR().String()
+	return fmt.Sprintf("%s/%s/%s", c.Group, c.Version, c.Kind)
 }
 
 func (c *ConfigResource) AsGVR() schema.GroupVersionResource {
@@ -114,4 +120,34 @@ func (c *ConfigResource) AsGVR() schema.GroupVersionResource {
 
 func (c *ConfigRule) String() string {
 	return c.Id
+}
+
+func (selector *ConfigLabelSelector) IsEmpty() bool {
+	if selector == nil || (len(selector.MatchLabels) == 0 && len(selector.MatchExpressions) == 0) {
+		return true
+	}
+
+	return false
+}
+
+func (selector *ConfigLabelSelector) Compile() (string, error) {
+	// no selector
+	if selector.IsEmpty() {
+		return "", nil
+	}
+
+	if selector.selector == nil {
+		labelSelector := metav1.FormatLabelSelector(&selector.LabelSelector)
+
+		switch labelSelector {
+		case KubeSelectorError:
+			return "", fmt.Errorf(`unable to compile Kubernetes selector for resource: %v`, selector)
+		case KubeSelectorNone:
+			labelSelector = ""
+		}
+
+		selector.selector = &labelSelector
+	}
+
+	return *selector.selector, nil
 }

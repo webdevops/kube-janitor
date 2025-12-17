@@ -54,6 +54,13 @@ rules:
             foo: bar
 
     # kubernetes selector (matchLabels, matchExpressions), optional
+    # if a namespaceSelector is active only namespaced resources will be checked
+    # !! be careful !!
+    # to force this behaviour for all namespaces try
+    #   namespaceSelector:
+    #     matchExpressions:
+    #       - { key: "kubernetes.io/metadata.name", operator: Exists }
+
     namespaceSelector:
       matchLabels:
         kubernetes.io/metadata.name: default

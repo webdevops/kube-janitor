@@ -19,24 +19,41 @@ func (j *Janitor) runRules(ctx context.Context) error {
 		)
 		ruleLogger.Info("running rule")
 
-		resourceList, err := j.kubeLookupGvrs(rule.Resources)
+		namespaced := false
+		if !rule.NamespaceSelector.IsEmpty() {
+			namespaced = true
+		}
+
+		resourceList, err := j.kubeLookupGvrs(rule.Resources, namespaced)
 		if err != nil {
 			return err
 		}
-		
-		// TODO: check if namespace selector is empty and if, use the cluster list instead
 
-		err = j.kubeEachNamespace(ctx, rule.NamespaceSelector, func(namespace corev1.Namespace) error {
-			namespaceLogger := ruleLogger
+		// build namespace list
+		var namespaceList []string
+		if namespaced {
+			err = j.kubeEachNamespace(ctx, rule.NamespaceSelector, func(namespace corev1.Namespace) error {
+				namespaceList = append(namespaceList, namespace.Name)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			// we fake an empty namespace (=get resources from the cluster view)
+			namespaceList = append(namespaceList, KubeNoNamespace)
+		}
 
+		// find resources, check and process them
+		for _, namespace := range namespaceList {
 			for _, resourceType := range resourceList {
-				gvkLogger := namespaceLogger.With(slog.Any("gvk", resourceType))
-				err := j.kubeEachResource(ctx, resourceType.AsGVR(), namespace.GetName(), resourceType.Selector, func(resource unstructured.Unstructured) error {
-					resourceLogger := gvkLogger.With(
-						slog.String("resource", resource.GetName()),
-					)
-					resourceLogger.Debug("checking resources")
+				gvkLogger := ruleLogger.With(slog.Any("groupVersionKind", resourceType))
+				if namespace != KubeNoNamespace {
+					gvkLogger = gvkLogger.With(slog.String("namespace", namespace))
+				}
 
+				gvkLogger.Info("checking resources")
+				err := j.kubeEachResource(ctx, resourceType.AsGVR(), namespace, resourceType.Selector, func(resource unstructured.Unstructured) error {
 					return j.checkResourceTtlAndTriggerDeleteIfExpired(
 						ctx,
 						gvkLogger,
@@ -51,14 +68,9 @@ func (j *Janitor) runRules(ctx context.Context) error {
 					)
 				})
 				if err != nil {
-					return err
+					gvkLogger.Error("failed to list resources", slog.Any("error", err))
 				}
 			}
-
-			return nil
-		})
-		if err != nil {
-			return err
 		}
 	}
 

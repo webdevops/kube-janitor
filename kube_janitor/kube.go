@@ -2,7 +2,6 @@ package kube_janitor
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -20,39 +19,60 @@ const (
 
 	KubeSelectorError = "<error>"
 	KubeSelectorNone  = "<none>"
+
+	KubeVerbGet    = "get"
+	KubeVerbList   = "list"
+	KubeVerbDelete = "delete"
 )
 
 type (
-	KubeServerGvrList []metav1.GroupVersionKind
+	KubeServerGroupVersionKindList []KubeServerGroupVersionKind
+
+	KubeServerGroupVersionKind struct {
+		metav1.GroupVersionKind
+		Namespaced bool
+	}
 )
 
-func (j *Janitor) kubeDiscoverGVKs() (KubeServerGvrList, error) {
+func (j *Janitor) kubeDiscoverGVKs() (KubeServerGroupVersionKindList, error) {
 	cacheKey := "kube.servergroups"
 
 	// from cache
 	if val, ok := j.cache.Get(cacheKey); ok {
-		if v, ok := val.(KubeServerGvrList); ok {
+		if v, ok := val.(KubeServerGroupVersionKindList); ok {
 			return v, nil
 		}
 	}
 
-	ret := KubeServerGvrList{}
+	ret := KubeServerGroupVersionKindList{}
 
-	groupsResult, resourcesResult, err := j.kubeClient.Discovery().ServerGroupsAndResources()
+	j.logger.Info("discovering Kubernetes api groups and resources (GroupVersionKind)")
+
+	apiGroupsResult, apiResourcesResult, err := j.kubeClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return nil, err
 	}
 
 	// build GVK list
-	for _, serverGroup := range groupsResult {
-		for _, resourceGroup := range resourcesResult {
-			if resourceGroup.GroupVersion == serverGroup.PreferredVersion.GroupVersion {
-				for _, resource := range resourceGroup.APIResources {
-					if slices.Contains([]string(resource.Verbs), "list") && slices.Contains([]string(resource.Verbs), "delete") {
-						ret = append(ret, metav1.GroupVersionKind{
-							Group:   serverGroup.Name,
-							Version: serverGroup.PreferredVersion.Version,
-							Kind:    resource.Name,
+	// loop though all available api groups
+	for _, apiGroup := range apiGroupsResult {
+		// go though all the api resources (by api group)
+		for _, apiResourceGroup := range apiResourcesResult {
+			// only use preferred version, we don't care about the others (old) versions
+			if apiResourceGroup.GroupVersion == apiGroup.PreferredVersion.GroupVersion {
+				for _, resource := range apiResourceGroup.APIResources {
+					// only select resources if we can get, list and delete it
+					// (otherwise it doesn't make sense)
+					if slices.Contains([]string(resource.Verbs), KubeVerbGet) &&
+						slices.Contains([]string(resource.Verbs), KubeVerbList) &&
+						slices.Contains([]string(resource.Verbs), KubeVerbDelete) {
+						ret = append(ret, KubeServerGroupVersionKind{
+							GroupVersionKind: metav1.GroupVersionKind{
+								Group:   apiGroup.Name,
+								Version: apiGroup.PreferredVersion.Version,
+								Kind:    resource.Name,
+							},
+							Namespaced: resource.Namespaced,
 						})
 					}
 				}
@@ -65,9 +85,9 @@ func (j *Janitor) kubeDiscoverGVKs() (KubeServerGvrList, error) {
 	return ret, nil
 }
 
-func (j *Janitor) kubeLookupGvrs(list ConfigResourceList) (ConfigResourceList, error) {
+func (j *Janitor) kubeLookupGvrs(list ConfigResourceList, namespaced bool) (ConfigResourceList, error) {
 	var (
-		gvrList KubeServerGvrList
+		gvrList KubeServerGroupVersionKindList
 		err     error
 	)
 	ret := []*ConfigResource{}
@@ -82,21 +102,25 @@ func (j *Janitor) kubeLookupGvrs(list ConfigResourceList) (ConfigResourceList, e
 				}
 			}
 
-			for _, row := range gvrList {
-				if resource.Group != "*" && !strings.EqualFold(resource.Group, row.Group) {
+			for _, serverGroupVersionKind := range gvrList {
+				if namespaced && !serverGroupVersionKind.Namespaced {
 					continue
 				}
-				if resource.Version != "*" && !strings.EqualFold(resource.Version, row.Version) {
+
+				if resource.Group != "*" && !strings.EqualFold(resource.Group, serverGroupVersionKind.Group) {
 					continue
 				}
-				if resource.Kind != "*" && !strings.EqualFold(resource.Kind, row.Kind) {
+				if resource.Version != "*" && !strings.EqualFold(resource.Version, serverGroupVersionKind.Version) {
+					continue
+				}
+				if resource.Kind != "*" && !strings.EqualFold(resource.Kind, serverGroupVersionKind.Kind) {
 					continue
 				}
 
 				clone := resource.Clone()
-				clone.Group = row.Group
-				clone.Version = row.Version
-				clone.Kind = row.Kind
+				clone.Group = serverGroupVersionKind.Group
+				clone.Version = serverGroupVersionKind.Version
+				clone.Kind = serverGroupVersionKind.Kind
 
 				ret = append(ret, clone)
 			}
@@ -109,26 +133,8 @@ func (j *Janitor) kubeLookupGvrs(list ConfigResourceList) (ConfigResourceList, e
 	return ret, nil
 }
 
-func (j *Janitor) kubeBuildLabelSelector(selector *metav1.LabelSelector) (string, error) {
-	// no selector
-	if selector == nil {
-		return "", nil
-	}
-
-	compiledSelector := metav1.FormatLabelSelector(selector)
-	if strings.EqualFold(compiledSelector, KubeSelectorError) {
-		return "", fmt.Errorf(`unable to compile Kubernetes selector for resource: %v`, selector)
-	}
-
-	if !strings.EqualFold(compiledSelector, KubeSelectorNone) {
-		return compiledSelector, nil
-	}
-
-	return "", nil
-}
-
-func (j *Janitor) kubeEachNamespace(ctx context.Context, selector *metav1.LabelSelector, callback func(namespace corev1.Namespace) error) error {
-	labelSelector, err := j.kubeBuildLabelSelector(selector)
+func (j *Janitor) kubeEachNamespace(ctx context.Context, selector ConfigLabelSelector, callback func(namespace corev1.Namespace) error) error {
+	labelSelector, err := selector.Compile()
 	if err != nil {
 		return err
 	}
@@ -161,8 +167,8 @@ func (j *Janitor) kubeEachNamespace(ctx context.Context, selector *metav1.LabelS
 	return nil
 }
 
-func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionResource, namespace string, selector *metav1.LabelSelector, callback func(unstructured unstructured.Unstructured) error) error {
-	labelSelector, err := j.kubeBuildLabelSelector(selector)
+func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionResource, namespace string, selector ConfigLabelSelector, callback func(unstructured unstructured.Unstructured) error) error {
+	labelSelector, err := selector.Compile()
 	if err != nil {
 		return err
 	}
