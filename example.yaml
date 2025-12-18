@@ -1,7 +1,8 @@
+#################################################
 ## TTL rule
-## goes throw all defined ttl.resources and tries to checks for ttl.annotation and/or ttl.label
-## if annotation/value is set, janitor will try to parse it and checks against the metadata.creationTimestamp
-## if expired, resource will be deleted
+## goes throw all defined ttl.resources and tries to checks for ttl.annotation and/or ttl.label.
+## if annotation/value is set, janitor will try to parse it and checks against the metadata.creationTimestamp.
+## if expired, resource will be deleted.
 ttl:
   ## checks all resources by annotation
   annotation: janitor/ttl
@@ -20,10 +21,17 @@ ttl:
     # this rule will match ALL resources, !BE CAREFUL!
     # - {group: "*", version: "*", kind: "*"}
 
-## static rules (fixed TTLs without using ttl definition in labels/annotations)
+#################################################
+## static rules
+## applies a fixed TTLs against resources metadata.creationTimestamp (or JMESpath timestampPath)
+## doesn't use an annotation/ttl for TTL calculation.
+## useful to remove resources which should only exists for a centrally defined time.
+## if namespaceSelector is used only namespaced resources will be processed.
 rules:
   # cleanup of completed/failed pods which are not yet removed by the Kubernetes control plane
   - id: CleanupCompletedPods
+    ## ttl, calculated against terminated.finishedAt (in this example)
+    ttl: 1h
     resources:
       - group: ""
         version: v1
@@ -42,14 +50,17 @@ rules:
     ## run on all namespaces
     namespaceSelector: {}
 
-    ## ttl for rule (based on terminated.finishedAt, see timestampPath)
-    ttl: 1h
-
   - id: example
+    # resources expires 1 hour after creation
+    ttl: 1h
     resources:
       - group: ""
         version: v1
         kind: configmaps
+
+        # JMESpath where to get the timestamp from, if empty the janitor uses metadata.creationTimestamp
+        timestampPath: ~
+
         # JMESpath for additional selector, should return true if resource should be used for TTL checks, optional
         filterPath: |-
           !(metadata.annotations."kubernetes.io/description")
@@ -71,4 +82,3 @@ rules:
       matchLabels:
         kubernetes.io/metadata.name: default
 
-    ttl: 1h # resources expires 1 hour after creation
