@@ -6,28 +6,41 @@ import (
 
 type (
 	JanitorMetrics struct {
-		ttl  *prometheus.GaugeVec
-		rule *prometheus.GaugeVec
+		deleted *prometheus.CounterVec
+		ttl     *prometheus.GaugeVec
+		rule    *prometheus.GaugeVec
 	}
 )
 
 // setupMetrics setups all Prometheus metrics with name, help and corresponding labels
 func (j *Janitor) setupMetrics() {
-	commonLabels := []string{
+	ttlLabels := []string{
 		"rule",
-		"version",
-		"kind",
+		"groupVersionKind",
 		"namespace",
 		"name",
 		"ttl",
 	}
+
+	j.prometheus.deleted = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kube_janitor_resource_deleted_total",
+			Help: "Total count of deleted Kubernetes resources",
+		},
+		[]string{
+			"rule",
+			"groupVersionKind",
+			"namespace",
+		},
+	)
+	prometheus.MustRegister(j.prometheus.deleted)
 
 	j.prometheus.ttl = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "kube_janitor_resource_ttl_expiry_timestamp_seconds",
 			Help: "Expiry unix timestamp for Kubernetes resources by ttl",
 		},
-		commonLabels,
+		ttlLabels,
 	)
 	prometheus.MustRegister(j.prometheus.ttl)
 
@@ -36,7 +49,7 @@ func (j *Janitor) setupMetrics() {
 			Name: "kube_janitor_resource_rule_expiry_timestamp_seconds",
 			Help: "Expiry unix timestamp for Kubernetes resources by rule",
 		},
-		commonLabels,
+		ttlLabels,
 	)
 	prometheus.MustRegister(j.prometheus.rule)
 }

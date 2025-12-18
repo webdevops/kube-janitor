@@ -67,5 +67,6 @@ Supported relative timestamps ([`time.Duration`](https://pkg.go.dev/time) and [`
 
 | Metric                                                | Description                                                                                         |
 |-------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `kube_janitor_resource_deleted_total`                 | Total number of deleted resources (by namespace, gvk, rule)                                         |
 | `kube_janitor_resource_ttl_expiry_timestamp_seconds`  | Expiry date (unix timestamp) for every resource which was detected matching the TTL expiry          |
 | `kube_janitor_resource_rule_expiry_timestamp_seconds` | Expiry date (unix timestamp) for every resource which was detected matching the static expiry rules |

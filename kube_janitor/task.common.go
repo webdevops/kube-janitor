@@ -78,9 +78,6 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 					rule.Id,
 					ttl,
 					metricList,
-					prometheus.Labels{
-						"rule": rule.String(),
-					},
 				)
 			})
 			if err != nil {
@@ -95,12 +92,14 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 }
 
 // checkResourceTtlAndTriggerDeleteIfExpired checks the resource against the defined TTL and deletes if the resource is expired
-func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, ruleId string, ttlValue string, metricResourceTtl *prometheusCommon.MetricList, labels prometheus.Labels) error {
+func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, ruleId string, ttlValue string, metricResourceTtl *prometheusCommon.MetricList) error {
 	resourceLogger := logger.WithGroup("resource").With(
 		slog.String("namespace", resource.GetNamespace()),
 		slog.String("name", resource.GetName()),
 		slog.String("ttl", ttlValue),
 	)
+
+	groupVersionKind := resource.GroupVersionKind()
 
 	// no ttl, no processing
 	// better safe than sorry
@@ -143,13 +142,6 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 		return nil
 	}
 
-	labels["version"] = resource.GetAPIVersion()
-	labels["kind"] = resource.GetKind()
-	labels["namespace"] = resource.GetNamespace()
-	labels["name"] = resource.GetName()
-	labels["ttl"] = ttlValue
-	metricResourceTtl.AddTime(labels, *parsedDate)
-
 	resourceLogger.Debug("found resource with valid TTL", slog.Time("expiry", *parsedDate))
 
 	if expired {
@@ -162,6 +154,15 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 				return err
 			}
 
+			// increase deleted counter
+			j.prometheus.deleted.With(
+				prometheus.Labels{
+					"rule":             ruleId,
+					"groupVersionKind": fmt.Sprintf("%s/%s/%s", groupVersionKind.Group, groupVersionKind.Version, groupVersionKind.Kind),
+					"namespace":        resource.GetNamespace(),
+				},
+			).Inc()
+
 			reason := "TimeToLiveExpired"
 			message := fmt.Sprintf(`TTL of "%v" is expired and resource is being deleted (%s)`, ttlValue, ruleId)
 
@@ -170,6 +171,20 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 				resourceLogger.Error("unable to create Kubernetes Event", slog.Any("error", err))
 			}
 		}
+	} else {
+		// resource not yet expired, but add expiry as metric
+
+		metricResourceTtl.AddTime(
+			prometheus.Labels{
+				"rule":             ruleId,
+				"groupVersionKind": fmt.Sprintf("%s/%s/%s", groupVersionKind.Group, groupVersionKind.Version, groupVersionKind.Kind),
+				"namespace":        resource.GetNamespace(),
+				"name":             resource.GetName(),
+				"ttl":              ttlValue,
+			},
+			*parsedDate,
+		)
+
 	}
 
 	return nil
