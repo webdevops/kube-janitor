@@ -24,7 +24,7 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 	ruleLogger := logger.With(
 		slog.Any("rule", rule),
 	)
-	ruleLogger.Info("running rule")
+	ruleLogger.Info("starting rule")
 
 	var namespaced bool
 	if !rule.NamespaceSelector.IsEmpty() {
