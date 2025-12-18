@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/webdevops/go-common/log/slogger"
@@ -19,6 +20,7 @@ const (
 
 // runRule executes one ConfigRule ttl run
 func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *ConfigRule, metricList *prometheusCommon.MetricList, filterFunc func(rule *ConfigRule, resource unstructured.Unstructured) (string, bool)) error {
+	startTime := time.Now()
 	ruleLogger := logger.With(
 		slog.Any("rule", rule),
 	)
@@ -86,6 +88,8 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 			}
 		}
 	}
+
+	logger.Info("finished rule", slog.Duration("duration", time.Since(startTime)))
 
 	return nil
 }
