@@ -22,9 +22,9 @@ const (
 func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *ConfigRule, metricList *prometheusCommon.MetricList, filterFunc func(rule *ConfigRule, resource unstructured.Unstructured) (string, bool)) error {
 	startTime := time.Now()
 	ruleLogger := logger.With(
-		slog.Any("rule", rule),
+		slog.String("rule", rule.String()),
 	)
-	ruleLogger.Info("starting rule")
+	ruleLogger.Info(`starting rule`)
 
 	var namespaced bool
 	if !rule.NamespaceSelector.IsEmpty() {
@@ -58,7 +58,7 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 	// find resources, check and process them
 	for _, namespace := range namespaceList {
 		for _, resourceType := range resourceList {
-			gvkLogger := ruleLogger.With(slog.Any("groupVersionKind", resourceType))
+			gvkLogger := ruleLogger.With(slog.String("groupVersionKind", resourceType.String()))
 			if namespace != KubeNoNamespace {
 				gvkLogger = gvkLogger.With(slog.String("namespace", namespace))
 			}
