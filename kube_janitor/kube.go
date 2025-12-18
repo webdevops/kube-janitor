@@ -64,9 +64,10 @@ func (j *Janitor) kubeDiscoverGVKs() (KubeServerGroupVersionKindList, error) {
 				for _, resource := range apiResourceGroup.APIResources {
 					// only select resources if we can get, list and delete it
 					// (otherwise it doesn't make sense)
-					if slices.Contains([]string(resource.Verbs), KubeVerbGet) &&
-						slices.Contains([]string(resource.Verbs), KubeVerbList) &&
-						slices.Contains([]string(resource.Verbs), KubeVerbDelete) {
+					resourceVerbs := []string(resource.Verbs)
+					if slices.Contains(resourceVerbs, KubeVerbGet) &&
+						slices.Contains(resourceVerbs, KubeVerbList) &&
+						slices.Contains(resourceVerbs, KubeVerbDelete) {
 						ret = append(ret, KubeServerGroupVersionKind{
 							GroupVersionKind: metav1.GroupVersionKind{
 								Group:   apiGroup.Name,
