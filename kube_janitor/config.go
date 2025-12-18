@@ -47,6 +47,7 @@ type (
 	}
 )
 
+// NewConfig create a new config instance
 func NewConfig() *Config {
 	return &Config{
 		Ttl: &ConfigTtl{
@@ -56,6 +57,7 @@ func NewConfig() *Config {
 	}
 }
 
+// Validate validates the config and all sub objects
 func (c *Config) Validate() error {
 	if err := c.Ttl.Validate(); err != nil {
 		return err
@@ -70,6 +72,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// Validate validates the ttl rule
 func (c *ConfigTtl) Validate() error {
 	if c.Label != "" {
 		if strings.Contains(c.Label, " ") {
@@ -80,6 +83,7 @@ func (c *ConfigTtl) Validate() error {
 	return nil
 }
 
+// Validate validates the config rule
 func (c *ConfigRule) Validate() error {
 	if c.Id == "" {
 		return errors.New("rules requires an id")
@@ -92,6 +96,7 @@ func (c *ConfigRule) Validate() error {
 	return nil
 }
 
+// Clone clones the object
 func (c *ConfigResource) Clone() *ConfigResource {
 	ret := ConfigResource{}
 	buf := bytes.Buffer{}
@@ -106,10 +111,12 @@ func (c *ConfigResource) Clone() *ConfigResource {
 	return &ret
 }
 
+// String creates <group>/<version>/<kind> representation
 func (c *ConfigResource) String() string {
 	return fmt.Sprintf("%s/%s/%s", c.Group, c.Version, c.Kind)
 }
 
+// AsGVR converts GVK to GVR
 func (c *ConfigResource) AsGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    c.Group,
@@ -122,6 +129,7 @@ func (c *ConfigRule) String() string {
 	return c.Id
 }
 
+// IsEmpty checks if the selector is empty/defined or not
 func (selector *ConfigLabelSelector) IsEmpty() bool {
 	if selector == nil || (len(selector.MatchLabels) == 0 && len(selector.MatchExpressions) == 0) {
 		return true
@@ -130,6 +138,7 @@ func (selector *ConfigLabelSelector) IsEmpty() bool {
 	return false
 }
 
+// Compile compiles the label selector struct to a string
 func (selector *ConfigLabelSelector) Compile() (string, error) {
 	// no selector
 	if selector.IsEmpty() {

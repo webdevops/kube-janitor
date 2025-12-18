@@ -38,18 +38,21 @@ type (
 	}
 )
 
+// New creates a new Janitor instance
 func New() *Janitor {
 	j := &Janitor{}
 	j.init()
 	return j
 }
 
+// init initializes metrics and cache
 func (j *Janitor) init() {
 	j.setupMetrics()
 	j.cache = cache.New(1*time.Hour, 5*time.Minute)
 	j.kubePageLimit = KubeDefaultListLimit
 }
 
+// connect creates kubernetes client and the dynamic client
 func (j *Janitor) connect() {
 	if j.dynClient != nil {
 		return
@@ -91,12 +94,14 @@ func (j *Janitor) connect() {
 	kubelog.SetLogger(kubeLogger)
 }
 
+// SetKubeconfig sets the KUBECONFIG for the connection to the Kubernetes control plane
 func (j *Janitor) SetKubeconfig(kubeconfig string) *Janitor {
 	j.kubeconfig = kubeconfig
 	return j
 }
 
-func (j *Janitor) GetConfigFromFile(path string) *Janitor {
+// LoadConfigFromFile loads the config file from the filesystem and parses it
+func (j *Janitor) LoadConfigFromFile(path string) *Janitor {
 	if j.config == nil {
 		j.config = NewConfig()
 	}
@@ -126,26 +131,31 @@ func (j *Janitor) GetConfigFromFile(path string) *Janitor {
 	return j
 }
 
+// SetLogger sets the logger
 func (j *Janitor) SetLogger(logger *slogger.Logger) *Janitor {
 	j.logger = logger
 	return j
 }
 
+// SetDryRun enables or disables the dry run (no deletion)
 func (j *Janitor) SetDryRun(val bool) *Janitor {
 	j.dryRun = val
 	return j
 }
 
+// SetKubePageSize sets the paging size
 func (j *Janitor) SetKubePageSize(val int64) *Janitor {
 	j.kubePageLimit = val
 	return j
 }
 
+// Connects connects the janitor to the Kubernetes control plane
 func (j *Janitor) Connect() *Janitor {
 	j.connect()
 	return j
 }
 
+// Start starts the background endless janitor run
 func (j *Janitor) Start(interval time.Duration) *Janitor {
 	go func() {
 		// wait for settle down
@@ -168,6 +178,7 @@ func (j *Janitor) Start(interval time.Duration) *Janitor {
 	return j
 }
 
+// Run executes one janitor rule run
 func (j *Janitor) Run() error {
 	ctx := context.Background()
 

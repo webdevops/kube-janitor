@@ -23,6 +23,7 @@ func (path *JmesPath) IsEmpty() bool {
 	return path == nil || path.compiledPath == nil
 }
 
+// UnmarshallJmesPath parses the JMES path from a string, creates an JmesPath object and compiles the JMES path at the same time
 func UnmarshallJmesPath(ctx context.Context, path *JmesPath, data []byte) error {
 	var valString string
 
@@ -46,30 +47,7 @@ func UnmarshallJmesPath(ctx context.Context, path *JmesPath, data []byte) error 
 	return nil
 }
 
-//
-// func (path *JmesPath) UnmarshalJSON(data []byte) error {
-// 	var valString string
-//
-// 	err := json.Unmarshal(data, &valString)
-// 	if err != nil {
-// 		return fmt.Errorf(`failed to parse jmespath as string: %w`, err)
-// 	}
-//
-// 	valString = strings.TrimSpace(valString)
-//
-// 	if valString != "" {
-// 		compiledPath, err := jmespath.Compile(valString)
-// 		if err != nil {
-// 			return fmt.Errorf(`failed to compile jmespath "%s": %w`, valString, err)
-// 		}
-//
-// 		path.Path = valString
-// 		path.compiledPath = compiledPath
-// 	}
-//
-// 	return nil
-// }
-
+// fetchResourceValueByFromJmesPath fetches one value from a Kubernetes resource using JMES path
 func (j *Janitor) fetchResourceValueByFromJmesPath(resource unstructured.Unstructured, jmesPath *JmesPath) (interface{}, error) {
 	resourceRaw, err := resource.MarshalJSON()
 	if err != nil {
@@ -91,6 +69,7 @@ func (j *Janitor) fetchResourceValueByFromJmesPath(resource unstructured.Unstruc
 	return result, nil
 }
 
+// fetchResourceValueByFromJmesPath checks if Kubernetes resource should be skipped based on the JMES path
 func (j *Janitor) checkResourceIsSkippedFromJmesPath(resource unstructured.Unstructured, jmesPath *JmesPath) (bool, error) {
 	result, err := j.fetchResourceValueByFromJmesPath(resource, jmesPath)
 	if err != nil {
@@ -114,6 +93,7 @@ func (j *Janitor) checkResourceIsSkippedFromJmesPath(resource unstructured.Unstr
 	return false, nil
 }
 
+// parseResourceTimestampFromJmesPath fetches and parses a timestamp value from a Kubernetes resource using JMES path
 func (j *Janitor) parseResourceTimestampFromJmesPath(resource unstructured.Unstructured, jmesPath *JmesPath) (*time.Time, error) {
 	result, err := j.fetchResourceValueByFromJmesPath(resource, jmesPath)
 	if err != nil {

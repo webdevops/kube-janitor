@@ -32,6 +32,7 @@ var (
 	}
 )
 
+// parseTimestamp parses a string against the list of possible timestamp formats, returns nil if parsing failed
 func (j *Janitor) parseTimestamp(val string) *time.Time {
 	val = strings.TrimSpace(val)
 	if val == "" || val == "0" {
@@ -53,6 +54,7 @@ func (j *Janitor) parseTimestamp(val string) *time.Time {
 	return nil
 }
 
+// parseTimestamp checks an expiry string (unixtimestmap, duration or datetime string) against a timestamp, returns the parsed timestamp, if the timestamp is expired and possible errors
 func (j *Janitor) checkExpiryDate(createdAt time.Time, expiry string) (parsedTime *time.Time, expired bool, err error) {
 	expired = false
 

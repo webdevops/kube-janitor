@@ -12,6 +12,7 @@ ttl:
     # from the serverside GVK list, BE CAREFUL with wildcards!
     - {group: "", version: "v1", kind: "pods"}
     - {group: "", version: v1, kind: secrets}
+    - {group: "", version: v1, kind: configmaps}
     - {group: apps, version: "*", kind: "*"}
 
 # static rules (fixed TTLs without using ttl definition in labels/annotations)

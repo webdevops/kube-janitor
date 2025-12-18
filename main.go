@@ -44,7 +44,7 @@ func main() {
 		SetLogger(logger).
 		Connect().
 		SetKubePageSize(Opts.Kubernetes.ItemsPerPage).
-		GetConfigFromFile(Opts.Janitor.Config).
+		LoadConfigFromFile(Opts.Janitor.Config).
 		SetDryRun(Opts.Janitor.DryRun)
 
 	if Opts.Janitor.Once {
@@ -62,6 +62,7 @@ func main() {
 	}
 }
 
+// initArgparser inits the argument parser
 func initArgparser() {
 	argparser = flags.NewParser(&Opts, flags.Default)
 	_, err := argparser.Parse()
@@ -79,7 +80,7 @@ func initArgparser() {
 	}
 }
 
-// start and handle prometheus handler
+// startHttpServer start and handle prometheus handler
 func startHttpServer() {
 	mux := http.NewServeMux()
 

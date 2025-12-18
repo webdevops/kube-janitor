@@ -34,6 +34,7 @@ type (
 	}
 )
 
+// kubeLookupGvkList fetches all GroupVersionKinds from the Kubernetes control plane (cached)
 func (j *Janitor) kubeDiscoverGVKs() (KubeServerGroupVersionKindList, error) {
 	cacheKey := "kube.servergroups"
 
@@ -85,7 +86,8 @@ func (j *Janitor) kubeDiscoverGVKs() (KubeServerGroupVersionKindList, error) {
 	return ret, nil
 }
 
-func (j *Janitor) kubeLookupGvrs(list ConfigResourceList, namespaced bool) (ConfigResourceList, error) {
+// kubeLookupGvkList looksup all GroupVersionKinds from the ConfigResourceList and fills in all wildcards
+func (j *Janitor) kubeLookupGvkList(list ConfigResourceList, namespaced bool) (ConfigResourceList, error) {
 	var (
 		gvrList KubeServerGroupVersionKindList
 		err     error
@@ -133,6 +135,7 @@ func (j *Janitor) kubeLookupGvrs(list ConfigResourceList, namespaced bool) (Conf
 	return ret, nil
 }
 
+// kubeEachNamespace fetches all visible namespaces and executes a callback function
 func (j *Janitor) kubeEachNamespace(ctx context.Context, selector ConfigLabelSelector, callback func(namespace corev1.Namespace) error) error {
 	labelSelector, err := selector.Compile()
 	if err != nil {
@@ -167,6 +170,7 @@ func (j *Janitor) kubeEachNamespace(ctx context.Context, selector ConfigLabelSel
 	return nil
 }
 
+// kubeEachResource fetches all visible resources and executes a callback function, if namespace is empty string it fetches all resources cluster wide
 func (j *Janitor) kubeEachResource(ctx context.Context, gvr schema.GroupVersionResource, namespace string, selector ConfigLabelSelector, callback func(unstructured unstructured.Unstructured) error) error {
 	labelSelector, err := selector.Compile()
 	if err != nil {
