@@ -1,4 +1,7 @@
-## TTL removal by annotation or label
+## TTL rule
+## goes throw all defined ttl.resources and tries to checks for ttl.annotation or ttl.label
+## if annotation/value is set, janitor will try to parse it and checks against the metadata.creationTimestamp
+## if expired, resource will be deleted
 ttl:
   ## checks all resources by annotation
   annotation: janitor/ttl
@@ -14,8 +17,10 @@ ttl:
     - {group: "", version: v1, kind: secrets}
     - {group: "", version: v1, kind: configmaps}
     - {group: apps, version: "*", kind: "*"}
+    # this rule will match ALL resources, !BE CAREFUL!
+    # - {group: "*", version: "*", kind: "*"}
 
-# static rules (fixed TTLs without using ttl definition in labels/annotations)
+## static rules (fixed TTLs without using ttl definition in labels/annotations)
 rules:
   # cleanup of completed/failed pods which are not yet removed by the Kubernetes control plane
   - id: CleanupCompletedPods
