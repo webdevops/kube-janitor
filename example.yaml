@@ -1,5 +1,5 @@
 ## TTL rule
-## goes throw all defined ttl.resources and tries to checks for ttl.annotation or ttl.label
+## goes throw all defined ttl.resources and tries to checks for ttl.annotation and/or ttl.label
 ## if annotation/value is set, janitor will try to parse it and checks against the metadata.creationTimestamp
 ## if expired, resource will be deleted
 ttl:

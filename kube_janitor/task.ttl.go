@@ -14,19 +14,29 @@ func (j *Janitor) runTtlResources(ctx context.Context) error {
 
 	filterFunc := func(rule *ConfigRule, resource unstructured.Unstructured) (string, bool) {
 		ttlValue := ""
+
+		// parse TTL from annotation
 		if j.config.Ttl.Annotation != "" {
 			// get from meta.annotations
 			if val, exists := resource.GetAnnotations()[j.config.Ttl.Annotation]; exists {
-				ttlValue = val
-			}
-		} else if j.config.Ttl.Label != "" {
-			// get from meta.labels
-			if val, exists := resource.GetLabels()[j.config.Ttl.Label]; exists {
-				ttlValue = val
+				val = strings.TrimSpace(val)
+				if val != "" {
+					ttlValue = val
+				}
 			}
 		}
 
-		ttlValue = strings.TrimSpace(ttlValue)
+		// parse TTL from label
+		if j.config.Ttl.Label != "" {
+			// get from meta.labels
+			if val, exists := resource.GetLabels()[j.config.Ttl.Label]; exists {
+				val = strings.TrimSpace(val)
+				if val != "" {
+					ttlValue = val
+				}
+			}
+		}
+
 		if ttlValue != "" {
 			return ttlValue, true
 		}
