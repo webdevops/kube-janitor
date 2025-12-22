@@ -19,6 +19,8 @@ Usage:
   kube-janitor [OPTIONS]
 
 Application Options:
+      --version                                    Show version
+      --version.template=                          Version go template, eg {{.Version}}
       --log.level=[trace|debug|info|warning|error] Log level (default: info) [$LOG_LEVEL]
       --log.format=[logfmt|json]                   Log format (default: logfmt) [$LOG_FORMAT]
       --log.source=[|short|file|full]              Show source for every log message (useful for debugging and bug reports) [$LOG_SOURCE]

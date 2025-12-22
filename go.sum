@@ -123,8 +123,8 @@ github.com/stretchr/objx v0.5.2/go.mod h1:FRsXN1f5AsAjCGJKqEizvkpNtU+EGNCLh3NxZ/
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/webdevops/go-common v0.0.0-20251219213826-139615203ee5 h1:tWKJuCBPLrmThNw2YFDdh3yx95No75Tev+zgMxJ1RCQ=
-github.com/webdevops/go-common v0.0.0-20251219213826-139615203ee5/go.mod h1:2RZgXC980Lwz2M00Ghm+8/fGY864X7xzXPzFR2RojHc=
+github.com/webdevops/go-common v0.0.0-20251222130718-713f8c390b81 h1:aTQaT6FWdu02ZZl3aaCtWxu6HQA4QsmmU6TqLiTkLd0=
+github.com/webdevops/go-common v0.0.0-20251222130718-713f8c390b81/go.mod h1:FRDcaUKsREtkbLMx1Xoe6DFsTo3FI8PtGBgtJERPGBk=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 go.uber.org/automaxprocs v1.6.0 h1:O3y2/QNTOdbF+e/dpXNNW7Rx2hZ4sTIPyybbxyNqTUs=

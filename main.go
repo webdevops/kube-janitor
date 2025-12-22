@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"runtime"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -24,19 +23,14 @@ const (
 var (
 	argparser *flags.Parser
 	Opts      config.Opts
-
-	// Git version information
-	gitCommit = "<unknown>"
-	gitTag    = "<unknown>"
-	buildDate = "<unknown>"
 )
 
 func main() {
 	initArgparser()
 	initLogger()
 
-	logger.Info(fmt.Sprintf("starting kube-janitor v%s (%s; %s; by %v at %v)", gitTag, gitCommit, runtime.Version(), Author, buildDate))
-	logger.Info(string(Opts.GetJson()))
+	printStartup("kube-janitor", Author)
+
 	initSystem()
 
 	janitor := kube_janitor.New()

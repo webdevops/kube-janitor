@@ -12,7 +12,7 @@ require (
 	github.com/jmespath-community/go-jmespath v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
-	github.com/webdevops/go-common v0.0.0-20251219213826-139615203ee5
+	github.com/webdevops/go-common v0.0.0-20251222130718-713f8c390b81
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0
 	k8s.io/client-go v0.35.0

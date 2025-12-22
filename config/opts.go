@@ -7,6 +7,11 @@ import (
 
 type (
 	Opts struct {
+		Version struct {
+			Version  bool    `long:"version" description:"Show version"`
+			Template *string `long:"version.template" description:"Version go template, eg {{.Version}}"`
+		}
+
 		// logger
 		Logger struct {
 			Level  string `long:"log.level"    env:"LOG_LEVEL"   description:"Log level" choice:"trace" choice:"debug" choice:"info" choice:"warning" choice:"error" default:"info"`                          // nolint:staticcheck // multiple choices are ok
