@@ -39,11 +39,11 @@ rules:
 
         ## get timestampo from containerStatuses if pod is terminated
         timestampPath: |-
-          max(containerStatuses[*].state.terminated.finishedAt)
+          max(status.containerStatuses[*].state.terminated.finishedAt)
 
         ## filter only pods which are in phase "Failed" or "Succeeded"
         filterPath: |-
-          phase == 'Failed' || phase == 'Succeeded'
+          status.phase == 'Failed' || status.phase == 'Succeeded'
 
         selector: {}
 
