@@ -50,6 +50,28 @@ rules:
     ## run on all namespaces
     namespaceSelector: {}
 
+  # cleanup of evicted pods which are not yet removed by the Kubernetes control plane
+  - id: CleanupEvictedPods
+    ## ttl, calculated against terminated.finishedAt
+    ttl: 15m
+    resources:
+      - group: ""
+        version: v1
+        kind: pods
+
+        ## get timestampo from containerStatuses if pod is terminated
+        timestampPath: |-
+          max(status.containerStatuses[*].lastState.terminated.finishedAt)
+
+        ## filter only pods which are in phase "Failed" or "Succeeded"
+        filterPath: |-
+          status.reason == 'Evicted'
+
+        selector: {}
+
+    ## run on all namespaces
+    namespaceSelector: {}
+
   - id: example
     # resources expires 1 hour after creation
     ttl: 1h
