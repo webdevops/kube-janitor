@@ -7,7 +7,7 @@ toolchain go1.25.5
 require (
 	fortio.org/duration v1.0.4
 	github.com/go-logr/logr v1.4.3
-	github.com/goccy/go-yaml v1.19.1
+	github.com/goccy/go-yaml v1.19.2
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/jmespath-community/go-jmespath v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
