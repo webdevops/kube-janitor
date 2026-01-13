@@ -45,7 +45,10 @@ rules:
         filterPath: |-
           status.phase == 'Failed' || status.phase == 'Succeeded'
 
-        selector: {}
+        selector:
+          matchExpressions:
+            # exclude kubernetes jobs
+            - { key: "batch.kubernetes.io/job-name", operator: DoesNotExist }
 
     ## run on all namespaces
     namespaceSelector: {}
