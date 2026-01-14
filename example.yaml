@@ -21,8 +21,9 @@ ttl:
     # this rule will match ALL resources, !BE CAREFUL!
     # - {group: "*", version: "*", kind: "*"}
 
+  ## delete options, optional
   deleteOptions:
-    propagationPolicy: Foreground # Foreground, Background, Orphan or empty
+    propagationPolicy: Background # Foreground, Background, Orphan or empty
     gracePeriodSeconds: 120 # seconds
 
 #################################################
@@ -99,6 +100,7 @@ rules:
           matchLabels:
             foo: bar
 
+    ## delete options, optional
     deleteOptions:
       propagationPolicy: Foreground # Foreground, Background, Orphan or empty
       gracePeriodSeconds: 120 # seconds
