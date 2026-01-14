@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	RuleIdInternalTTL = "kube-janitor-ttl"
+	RuleIdInternalTTL = "JanitorResourceTtl"
 )
 
 // runRule executes one ConfigRule ttl run
