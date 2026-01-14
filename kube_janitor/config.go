@@ -21,6 +21,8 @@ type (
 		Annotation string             `json:"annotation"`
 		Label      string             `json:"label"`
 		Resources  ConfigResourceList `json:"resources"`
+
+		DeleteOptions ConfigRuleDeleteOptions `json:"deleteOptions"`
 	}
 
 	ConfigResourceList []*ConfigResource
@@ -39,7 +41,16 @@ type (
 		Resources         ConfigResourceList  `json:"resources"`
 		NamespaceSelector ConfigLabelSelector `json:"namespaceSelector"`
 		Ttl               string              `json:"ttl"`
+
+		DeleteOptions ConfigRuleDeleteOptions `json:"deleteOptions"`
 	}
+
+	ConfigRuleDeleteOptions struct {
+		PropagationPolicy  *ConfigRuleDeletePropagationPolicy `json:"propagationPolicy"`
+		GracePeriodSeconds *int64                             `json:"gracePeriodSeconds"`
+	}
+
+	ConfigRuleDeletePropagationPolicy metav1.DeletionPropagation
 
 	ConfigLabelSelector struct {
 		metav1.LabelSelector `json:",inline"`
@@ -80,6 +91,10 @@ func (c *ConfigTtl) Validate() error {
 		}
 	}
 
+	if err := c.DeleteOptions.PropagationPolicy.validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -91,6 +106,10 @@ func (c *ConfigRule) Validate() error {
 
 	if len(c.Resources) == 0 {
 		return errors.New("rules requires at least one resource")
+	}
+
+	if err := c.DeleteOptions.PropagationPolicy.validate(); err != nil {
+		return err
 	}
 
 	return nil
@@ -159,4 +178,20 @@ func (selector *ConfigLabelSelector) Compile() (string, error) {
 	}
 
 	return *selector.selector, nil
+}
+
+// validate validates the deletion PropagationPolicy
+func (p *ConfigRuleDeletePropagationPolicy) validate() error {
+	if p == nil {
+		return nil
+	}
+
+	switch metav1.DeletionPropagation(*p) {
+	case "", metav1.DeletePropagationForeground, metav1.DeletePropagationBackground, metav1.DeletePropagationOrphan:
+		// ok
+	default:
+		return errors.New("propagation policy must be Foreground, Background, or Orphan")
+	}
+
+	return nil
 }

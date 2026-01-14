@@ -46,8 +46,9 @@ func (j *Janitor) runTtlResources(ctx context.Context) error {
 
 	// faked rule for ttl handling
 	rule := &ConfigRule{
-		Id:        RuleIdInternalTTL,
-		Resources: j.config.Ttl.Resources,
+		Id:            RuleIdInternalTTL,
+		Resources:     j.config.Ttl.Resources,
+		DeleteOptions: j.config.Ttl.DeleteOptions,
 	}
 
 	err := j.runRule(ctx, j.logger, rule, metricResourceTtl, filterFunc)

@@ -75,7 +75,7 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 					gvkLogger,
 					resourceType,
 					resource,
-					rule.Id,
+					rule,
 					ttl,
 					metricList,
 				)
@@ -92,7 +92,7 @@ func (j *Janitor) runRule(ctx context.Context, logger *slogger.Logger, rule *Con
 }
 
 // checkResourceTtlAndTriggerDeleteIfExpired checks the resource against the defined TTL and deletes if the resource is expired
-func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, ruleId string, ttlValue string, metricResourceTtl *prometheusCommon.MetricList) error {
+func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context, logger *slogger.Logger, resourceConfig *ConfigResource, resource unstructured.Unstructured, rule *ConfigRule, ttlValue string, metricResourceTtl *prometheusCommon.MetricList) error {
 	resourceLogger := logger.WithGroup("resource").With(
 		slog.String("namespace", resource.GetNamespace()),
 		slog.String("name", resource.GetName()),
@@ -149,7 +149,16 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 			resourceLogger.Info("resource is expired, would delete resource (DRY-RUN)", slog.Time("expirationDate", *parsedDate))
 		} else {
 			resourceLogger.Info("deleting expired resource", slog.Time("expirationDate", *parsedDate))
-			err := j.dynClient.Resource(resourceConfig.AsGVR()).Namespace(resource.GetNamespace()).Delete(ctx, resource.GetName(), metav1.DeleteOptions{})
+			deleteOpts := metav1.DeleteOptions{}
+			if rule.DeleteOptions.PropagationPolicy != nil {
+				propagationPolicy := metav1.DeletionPropagation(*rule.DeleteOptions.PropagationPolicy)
+				deleteOpts.PropagationPolicy = &propagationPolicy
+			}
+			if rule.DeleteOptions.GracePeriodSeconds != nil {
+				deleteOpts.GracePeriodSeconds = rule.DeleteOptions.GracePeriodSeconds
+			}
+
+			err := j.dynClient.Resource(resourceConfig.AsGVR()).Namespace(resource.GetNamespace()).Delete(ctx, resource.GetName(), deleteOpts)
 			if err != nil {
 				return err
 			}
@@ -157,14 +166,14 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 			// increase deleted counter
 			j.prometheus.deleted.With(
 				prometheus.Labels{
-					"rule":             ruleId,
+					"rule":             rule.Id,
 					"groupVersionKind": fmt.Sprintf("%s/%s/%s", groupVersionKind.Group, groupVersionKind.Version, groupVersionKind.Kind),
 					"namespace":        resource.GetNamespace(),
 				},
 			).Inc()
 
 			reason := "TimeToLiveExpired"
-			message := fmt.Sprintf(`TTL of "%v" is expired and resource is being deleted (%s)`, ttlValue, ruleId)
+			message := fmt.Sprintf(`TTL of "%v" is expired and resource is being deleted (%s)`, ttlValue, rule.Id)
 
 			err = j.kubeCreateEventFromResource(ctx, resource.GetNamespace(), resource, message, reason)
 			if err != nil {
@@ -176,7 +185,7 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 
 		metricResourceTtl.AddTime(
 			prometheus.Labels{
-				"rule":             ruleId,
+				"rule":             rule.Id,
 				"groupVersionKind": fmt.Sprintf("%s/%s/%s", groupVersionKind.Group, groupVersionKind.Version, groupVersionKind.Kind),
 				"namespace":        resource.GetNamespace(),
 				"name":             resource.GetName(),

@@ -121,7 +121,7 @@ func (j *Janitor) LoadConfigFromFile(path string) *Janitor {
 	logger.Info("parsing configuration")
 	err = yaml.UnmarshalContext(parserCtx, data, j.config, yaml.Strict(), yaml.UseJSONUnmarshaler())
 	if err != nil {
-		logger.Fatal("failed to parse config file")
+		logger.Fatal("failed to parse config file", slog.Any("error", err.Error()))
 	}
 
 	err = j.config.Validate()

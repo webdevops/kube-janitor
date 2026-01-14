@@ -21,6 +21,10 @@ ttl:
     # this rule will match ALL resources, !BE CAREFUL!
     # - {group: "*", version: "*", kind: "*"}
 
+  deleteOptions:
+    propagationPolicy: foreground # Foreground, Background, Orphan or empty
+    gracePeriodSeconds: 120 # seconds
+
 #################################################
 ## static rules
 ## applies a fixed TTLs against resources metadata.creationTimestamp (or JMESpath timestampPath)
@@ -94,6 +98,10 @@ rules:
         selector:
           matchLabels:
             foo: bar
+
+    deleteOptions:
+      propagationPolicy: foreground # Foreground, Background, Orphan or empty
+      gracePeriodSeconds: 120 # seconds
 
     # kubernetes selector (matchLabels, matchExpressions), optional
     # if a namespaceSelector is active only namespaced resources will be checked
