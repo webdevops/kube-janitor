@@ -58,6 +58,17 @@ type (
 	}
 )
 
+func (opts *ConfigRuleDeleteOptions) loggerStruct() map[string]interface{} {
+	ret := map[string]interface{}{}
+	if opts.PropagationPolicy != nil {
+		ret["propagationPolicy"] = *opts.PropagationPolicy
+	}
+	if opts.GracePeriodSeconds != nil {
+		ret["gracePeriodSeconds"] = *opts.GracePeriodSeconds
+	}
+	return ret
+}
+
 // NewConfig create a new config instance
 func NewConfig() *Config {
 	return &Config{

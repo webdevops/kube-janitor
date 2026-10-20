@@ -97,6 +97,7 @@ func (j *Janitor) checkResourceTtlAndTriggerDeleteIfExpired(ctx context.Context,
 		slog.String("namespace", resource.GetNamespace()),
 		slog.String("name", resource.GetName()),
 		slog.String("ttl", ttlValue),
+		slog.Any("options", rule.DeleteOptions.loggerStruct()),
 	)
 
 	groupVersionKind := resource.GroupVersionKind()
